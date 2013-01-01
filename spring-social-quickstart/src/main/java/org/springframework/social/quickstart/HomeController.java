@@ -15,22 +15,26 @@
  */
 package org.springframework.social.quickstart;
 
+import static org.springframework.util.Assert.notNull;
+
 import java.util.List;
 
 import javax.inject.Inject;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.swing.plaf.ListUI;
 
 import org.springframework.core.env.Environment;
+import org.springframework.social.facebook.DialogType;
+import org.springframework.social.facebook.Display;
 import org.springframework.social.facebook.api.Facebook;
 import org.springframework.social.facebook.api.FacebookLink;
+import org.springframework.social.facebook.api.Post;
 import org.springframework.social.facebook.api.Reference;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.view.RedirectView;
 import org.springframework.web.util.HtmlUtils;
 
@@ -46,6 +50,7 @@ public class HomeController {
 	private Environment environment;
 	
 	private final Facebook facebook;
+	private final String backFromFacebookPath = "/backFromFacebook";
 	
 	@Inject
 	public HomeController(Facebook facebook) {
@@ -75,7 +80,7 @@ public class HomeController {
 
 	@RequestMapping(value = "/messages", method = RequestMethod.GET)
 	public String readMessages(Model model) {
-		List messages = facebook.feedOperations().getFeed();
+		List<Post> messages = facebook.feedOperations().getFeed();
 		
 		if (messages == null || messages.isEmpty()) {
 			model.addAttribute("messageCount", 0);
@@ -86,9 +91,8 @@ public class HomeController {
 		return "messages";
 	}
 
-	@RequestMapping(value = "/sendMessage", method = RequestMethod.GET)
-	public String sendMessage(HttpServletRequest request, HttpServletResponse response) throws Exception {
-		StringBuilder facebookSendDialogUrl = new StringBuilder("https://www.facebook.com/dialog/send");
+	private String buildFacebookDialogUri(HttpServletRequest request, DialogType dialogType, Display display) {
+		StringBuilder facebookSendDialogUrl = new StringBuilder("https://www.facebook.com/dialog/").append(dialogType.name());
 		
 //		System.out.println(request.getRequestURL());
 //		System.out.println(request.getProtocol());
@@ -97,27 +101,40 @@ public class HomeController {
 //		System.out.println(request.getServerPort());
 //		System.out.println(request.getContextPath());
 //		System.out.println(request.getServletPath());
-		String redirectUri = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort() + request.getContextPath() + "/messageSent";
+		String redirectUri = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort() + request.getContextPath() + backFromFacebookPath;
 		
 		// TODO sendMessage with a form post, and put parameters in the model to let RedirectView use them as parameters
 		facebookSendDialogUrl.append("?")
 			.append("app_id=").append(environment.getProperty("facebook.clientId"))
 			.append("&").append("redirect_uri=").append(HtmlUtils.htmlEscape(redirectUri))
-			.append("&").append("display=popup")
+			.append("&").append("display=").append(display.name())
 			.append("&").append("link=").append(HtmlUtils.htmlEscape("http://www.herdwisdom.com/"))
 			.append("&").append("picture=").append(HtmlUtils.htmlEscape("http://www.herdwisdom.com/images/interface/blog_banner.png"))
 			.append("&").append("name=").append(HtmlUtils.htmlEscape("a wonderfull company"));
 		
-		new RedirectView(facebookSendDialogUrl.toString(), false).render(null, request, response);
-				
-		return null;
+		String url = facebookSendDialogUrl.toString();
+		return url;
 	}
 
-	@RequestMapping(value = "/messageSent", method = RequestMethod.GET)
-	public String backFromFacebookSendDialog(HttpServletRequest req, Model model) {
+	@RequestMapping(value = backFromFacebookPath, method = RequestMethod.GET)
+	public String backFromFacebookDialog(HttpServletRequest req, Model model) {
 		model.addAttribute("requestUrl", req.getRequestURL());
 		model.addAttribute("queryString", req.getQueryString());
-		return "messageSent";
+		return "backFromFacebook";
+	}
+	
+
+	@RequestMapping(value = "/openDialog", method = RequestMethod.POST)
+	public String openFacebookDialog(HttpServletRequest request, HttpServletResponse response,
+			@RequestParam DialogType dialogType, @RequestParam Display display) throws Exception {
+		
+		notNull(dialogType);
+		notNull(display);
+		
+		String facebookDialogUri = buildFacebookDialogUri(request, dialogType, display);
+		
+		new RedirectView(facebookDialogUri, false).render(null, request, response);
+		return null;
 	}
 
 }
