@@ -32,9 +32,11 @@ import org.springframework.social.facebook.api.Post;
 import org.springframework.social.facebook.api.Reference;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.servlet.view.RedirectView;
 import org.springframework.web.util.HtmlUtils;
 
@@ -103,7 +105,6 @@ public class HomeController {
 //		System.out.println(request.getServletPath());
 		String redirectUri = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort() + request.getContextPath() + backFromFacebookPath;
 		
-		// TODO sendMessage with a form post, and put parameters in the model to let RedirectView use them as parameters
 		facebookSendDialogUrl.append("?")
 			.append("app_id=").append(environment.getProperty("facebook.clientId"))
 			.append("&").append("redirect_uri=").append(HtmlUtils.htmlEscape(redirectUri))
@@ -120,12 +121,16 @@ public class HomeController {
 	public String backFromFacebookDialog(HttpServletRequest req, Model model) {
 		model.addAttribute("requestUrl", req.getRequestURL());
 		model.addAttribute("queryString", req.getQueryString());
+		
+		if (req.getParameter("post_id")!=null) {
+			model.addAttribute("post_id", req.getParameter("post_id"));
+		}
 		return "backFromFacebook";
 	}
 	
 
 	@RequestMapping(value = "/openDialog", method = RequestMethod.POST)
-	public String openFacebookDialog(HttpServletRequest request, HttpServletResponse response,
+	public String openFacebookDialog(HttpServletRequest request, HttpServletResponse response, RedirectAttributes redirectAttributes,
 			@RequestParam DialogType dialogType, @RequestParam Display display) throws Exception {
 		
 		notNull(dialogType);
@@ -134,7 +139,17 @@ public class HomeController {
 		String facebookDialogUri = buildFacebookDialogUri(request, dialogType, display);
 		
 		new RedirectView(facebookDialogUri, false).render(null, request, response);
+		
+		redirectAttributes.addFlashAttribute("dialogType", dialogType);
+		// TODO save dialog type in flash scope to use it when coming back from Facebook - TO BE TESTED
+		
 		return null;
+	}
+	
+	@RequestMapping(value="/getPost/{postId}", method=RequestMethod.GET)
+	public String readPost(@PathVariable String postId) {
+		Post post = this.facebook.feedOperations().getPost(postId);
+		return "home";
 	}
 
 }
