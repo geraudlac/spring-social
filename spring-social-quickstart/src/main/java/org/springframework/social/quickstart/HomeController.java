@@ -149,6 +149,9 @@ public class HomeController {
 	@RequestMapping(value="/getPost/{postId}", method=RequestMethod.GET)
 	public String readPost(@PathVariable String postId) {
 		Post post = this.facebook.feedOperations().getPost(postId);
+		
+		System.out.println("post found with id " + post.getId());
+		
 		return "home";
 	}
 
