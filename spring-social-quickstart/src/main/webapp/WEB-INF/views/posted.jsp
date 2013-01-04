@@ -5,6 +5,10 @@
 		<title>Link posted on my wall!</title>
 	</head>
 	<body>
+		<ul>
+			<li><a href="<c:url value="/" />">Main Menu</a></li>
+		</ul>
+		
 		<h3>post id: <c:out value="${postId}"/></h3>
 		
 		<dl>
