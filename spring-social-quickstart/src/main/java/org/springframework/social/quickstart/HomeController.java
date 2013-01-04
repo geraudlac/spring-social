@@ -147,12 +147,12 @@ public class HomeController {
 	}
 	
 	@RequestMapping(value="/getPost/{postId}", method=RequestMethod.GET)
-	public String readPost(@PathVariable String postId) {
+	public String readPost(@PathVariable String postId, Model model) {
 		Post post = this.facebook.feedOperations().getPost(postId);
 		
-		System.out.println("post found with id " + post.getId());
+		model.addAttribute("post", post);
 		
-		return "home";
+		return "posted";
 	}
 
 }
