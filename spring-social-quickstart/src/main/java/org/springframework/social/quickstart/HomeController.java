@@ -82,14 +82,25 @@ public class HomeController {
 
 	@RequestMapping(value = "/messages", method = RequestMethod.GET)
 	public String readMessages(Model model) {
-		List<Post> messages = facebook.feedOperations().getFeed();
+		List<Post> posts = facebook.feedOperations().getFeed();
 		
-		if (messages == null || messages.isEmpty()) {
-			model.addAttribute("messageCount", 0);
+		if (posts == null || posts.isEmpty()) {
+			model.addAttribute("postCount", 0);
 		} else {
-			model.addAttribute("messageCount", messages.size());
+			model.addAttribute("postCount", posts.size());
 		}
-		model.addAttribute("messages", messages);
+		model.addAttribute("posts", posts);
+		
+//		String inbox = facebook.openGraphOperations().publishAction("/inbox", null, null);
+		String inbox = facebook.restOperations().getForObject(facebook.GRAPH_API_URL+"/me/inbox", String.class);
+		model.addAttribute("inbox", inbox);
+		
+		String messageThreadToSeb = facebook.restOperations().getForObject(facebook.GRAPH_API_URL+"/317260181713942", String.class);
+		model.addAttribute("messageThreadToSeb", messageThreadToSeb);
+		
+		String message3ToSeb = facebook.restOperations().getForObject(facebook.GRAPH_API_URL+"/317260181713942_2", String.class);
+		model.addAttribute("message3ToSeb", message3ToSeb);
+		
 		return "messages";
 	}
 
