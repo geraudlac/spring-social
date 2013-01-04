@@ -103,7 +103,8 @@ public class HomeController {
 //		System.out.println(request.getServerPort());
 //		System.out.println(request.getContextPath());
 //		System.out.println(request.getServletPath());
-		String redirectUri = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort() + request.getContextPath() + backFromFacebookPath;
+		String redirectUri = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort() + request.getContextPath()
+				+ backFromFacebookPath + "/" + dialogType;
 		
 		facebookSendDialogUrl.append("?")
 			.append("app_id=").append(environment.getProperty("facebook.clientId"))
@@ -117,10 +118,12 @@ public class HomeController {
 		return url;
 	}
 
-	@RequestMapping(value = backFromFacebookPath, method = RequestMethod.GET)
-	public String backFromFacebookDialog(HttpServletRequest req, Model model) {
+	@RequestMapping(value = backFromFacebookPath+"/{dialogType}", method = RequestMethod.GET)
+	public String backFromFacebookDialog(@PathVariable DialogType dialogType, HttpServletRequest req, Model model) {
 		model.addAttribute("requestUrl", req.getRequestURL());
 		model.addAttribute("queryString", req.getQueryString());
+		
+		model.addAttribute("dialogType", dialogType);
 		
 		if (req.getParameter("post_id")!=null) {
 			model.addAttribute("post_id", req.getParameter("post_id"));
