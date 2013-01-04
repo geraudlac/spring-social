@@ -11,6 +11,7 @@
 			<!--
 				- publish_stream to be able to post on the wall via the API
 				- read_stream to be able to get a post (e.g. a link posted through the Facebook feed dialog
+				- read_mailbox to be able to get Inbox, Threads, and Messages
 			-->
 		</form>
 	</body>
